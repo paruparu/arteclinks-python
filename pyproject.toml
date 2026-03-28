@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arteclinks"
+version = "0.2.0"
+description = "ArTec Links メインユニット Python 制御ライブラリ"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = [
+    "pyserial>=3.5",
+    "bleak>=0.21",
+]
+
+[project.urls]
+Repository = "https://github.com/paruparu/arteclinks-python"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["arteclinks*"]
