@@ -77,9 +77,10 @@ class Button:
         # 停止
         device.button.stop_watching()
 
-    suzume-agent での使用例:
+    LLM エージェントとの連携例:
         device.button.start_watching()
-        device.button.on_press(agent.start_listening)
+        device.events.on_click(agent.run)
+        device.events.on_long_press(agent.stop)
     """
 
     def __init__(self, device: "ArTecLinks"):

@@ -254,20 +254,22 @@ validate_color_name("violet", COLORS)
 
 ---
 
-## suzume-agent 連携例
+## LLM エージェントとの連携
+
+ボタンをトリガー、LED をエージェントの状態インジケーターとして使うパターン。
 
 ```python
 from arteclinks import ArTecLinks
 
 device = ArTecLinks.connect_usb()
-device.led.blue()               # 待機中
 device.button.start_watching()
+device.led.blue()                   # 待機中
 
 def on_click():
-    device.led.yellow()         # 考え中
-    response = agent.think()
-    device.led.green()          # 応答完了
-    agent.speak(response)
+    device.led.yellow()             # 処理中
+    response = agent.run(input())
+    device.led.green()              # 完了
+    print(response)
 
 def on_long_press():
     device.led.off()
@@ -276,6 +278,17 @@ def on_long_press():
 device.events.on_click(on_click)
 device.events.on_long_press(on_long_press)
 ```
+
+### LED をエージェント状態にマッピングする例
+
+| 状態 | 色 |
+|------|----|
+| 待機中 | `blue` |
+| 入力受付中 | `white` |
+| 処理・推論中 | `yellow` |
+| 応答完了 | `green` |
+| エラー | `red` |
+| スリープ / オフ | `off` |
 
 ---
 

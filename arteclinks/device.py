@@ -33,19 +33,19 @@ class ArTecLinks:
         with ArTecLinks.connect_ble() as device:
             device.led.green()
 
-    suzume-agent での典型的な使い方:
+    LLM エージェントとの連携例:
         device = ArTecLinks.connect_usb()
 
         # エージェントの状態を LED で表現
         device.led.set_color("blue")    # 待機中
-        device.led.set_color("green")   # 話している
-        device.led.set_color("yellow")  # 考え中
+        device.led.set_color("yellow")  # 処理中
+        device.led.set_color("green")   # 応答完了
         device.led.set_color("red")     # エラー
         device.led.off()                # スリープ
 
-        # 人間からのトリガー入力
-        device.button.wait_for_press()  # ボタンが押されるまで待つ
-        device.button.on_press(callback)  # 非同期で検出
+        # ボタンをトリガーとして使う
+        device.button.wait_for_press()      # ブロッキング待機
+        device.events.on_click(callback)    # 非同期コールバック
     """
 
     def __init__(self, repl):

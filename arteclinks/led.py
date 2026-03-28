@@ -39,13 +39,11 @@ class LED:
         device.led.blue()           # 青
         device.led.off()            # 消灯
 
-    suzume-agent での使用例:
-        # エージェントが「考え中」を示す
-        device.led.set_color("blue")
-        # エージェントが応答完了を示す
-        device.led.set_color("green")
-        # エラー状態を示す
-        device.led.set_color("red")
+    LLM エージェントの状態表示例:
+        device.led.set_color("blue")    # 待機中
+        device.led.set_color("yellow")  # 処理中
+        device.led.set_color("green")   # 応答完了
+        device.led.set_color("red")     # エラー
     """
 
     def __init__(self, device: "ArTecLinks"):

@@ -1,8 +1,8 @@
 """
-suzume-agent 連携サンプル。
+LLM エージェント連携サンプル。
 
-実際の suzume-agent との接続部分はコメントで示す。
 LED でエージェントの状態を表示し、ボタンで人間がトリガーを入力する。
+実際のエージェント処理・音声処理はコメントで示す。
 """
 import time
 from arteclinks import ArTecLinks
