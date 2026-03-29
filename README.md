@@ -29,6 +29,8 @@ pip install -e arteclinks-python/
 
 ## クイックスタート
 
+### USB 接続
+
 ```python
 from arteclinks import ArTecLinks
 
@@ -37,6 +39,35 @@ with ArTecLinks.connect_usb() as device:
     device.button.wait_for_press()
     device.led.green()
 ```
+
+### BLE 接続
+
+```python
+from arteclinks import ArTecLinks
+import time
+
+device = ArTecLinks.connect_ble()   # ボタンを押しながら起動したデバイスに接続
+
+device.led.blue()
+device.button.start_watching()      # BLEではボタン監視は start_watching() が必要
+
+device.events.on_click(lambda: device.led.green())
+device.events.on_long_press(lambda: device.led.red())
+
+try:
+    while True:
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    pass
+
+device.disconnect()
+```
+
+> **USB との主な違い:**
+> - BLE では `button.wait_for_press()` を呼ぶ前に `button.start_watching()` が必要
+> - BLE では `with` 文によるコンテキストマネージャの代わりに `disconnect()` を明示的に呼ぶ
+>   (asyncio の制約により `with` 文はBLEでは使用しない)
+> - BLE 接続後は再アドバタイズされないため、切断したら再起動が必要
 
 ---
 
@@ -64,6 +95,36 @@ device = ArTecLinks.connect_ble(device_name="AL-6370")
 ```
 
 デバイスは **ボタンを押しながら** 起動しておくこと。
+
+#### BLE 接続の手順
+
+1. **デバイスをボタンを押しながら電源を入れる**
+   - ボタンを押したまま USB を差す、または電源投入する
+   - BLE モードで起動するとデバイス名が `AL-XXXX` 形式でアドバタイズされる
+
+2. **デバイス名の確認 (省略可)**
+   - デバイス名を調べるには、スキャンして一覧を出力する:
+     ```python
+     import asyncio
+     from bleak import BleakScanner
+     devices = asyncio.run(BleakScanner.discover(timeout=5.0))
+     for d in devices:
+         print(d.name, d.address)
+     ```
+   - `AL-` で始まる名前のデバイスが ArTec Links
+
+3. **接続**
+   - デバイスが 1 台だけなら `device_name` 省略で自動接続:
+     ```python
+     device = ArTecLinks.connect_ble()
+     ```
+   - 複数台ある場合や確実に指定したい場合はデバイス名を渡す:
+     ```python
+     device = ArTecLinks.connect_ble(device_name="AL-6370")
+     ```
+
+> **macOS**: Terminal に Bluetooth アクセス権限が必要。
+> システム設定 → プライバシーとセキュリティ → Bluetooth → Terminal を許可。
 
 ### コンテキストマネージャ
 

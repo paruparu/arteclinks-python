@@ -5,7 +5,6 @@ USB または BLE で ArTec Links メインユニットに接続し、
 LED・ボタンを操作するための統合インターフェース。
 """
 
-import asyncio
 import queue
 import threading
 from typing import Optional
@@ -119,7 +118,7 @@ class ArTecLinks:
             BleConnectionError: デバイスが見つからない・接続できない場合
         """
         repl = BleRepl(device_name, timeout)
-        asyncio.get_event_loop().run_until_complete(repl.open())
+        repl.open_sync()
         return cls(repl)
 
     # ------------------------------------------------------------------
@@ -129,8 +128,7 @@ class ArTecLinks:
     def _exec(self, code: str, timeout: Optional[float] = None) -> str:
         """デバイス上でPythonコードを実行して結果を返す (内部用)"""
         if isinstance(self._repl, BleRepl):
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self._repl.exec(code, timeout))
+            return self._repl.exec_sync(code, timeout)
         return self._repl.exec(code, timeout)
 
     def _exec_or_stream(self, exec_code: str, stream_cmd: Optional[str] = None) -> None:
@@ -146,8 +144,12 @@ class ArTecLinks:
         self._led_queue.put((exec_code, stream_cmd))
 
     def _led_worker(self) -> None:
-        """LED コマンドキューを直列処理するワーカー (バックグラウンドスレッド)"""
-        from .button import _MONITOR_SCRIPT
+        """LED コマンドキューを直列処理するワーカー (バックグラウンドスレッド)
+
+        USB: ストリームモード中は stdin 経由で高速にLEDコマンドを送る。
+        BLE: supports_stream_write=False なので常に exec 経由。
+             pause/resume は BleRepl では no-op のため透過的に動作する。
+        """
         while True:
             item = self._led_queue.get()
             if item is None:
@@ -155,16 +157,17 @@ class ArTecLinks:
             exec_code, stream_cmd = item
             try:
                 with self._repl._lock:
-                    if self._repl._stream_mode and stream_cmd is not None:
-                        # ストリームを止めずに stdin 経由でコマンド送信
+                    if self._repl._stream_mode and stream_cmd is not None \
+                            and self._repl.supports_stream_write:
+                        # USB: ストリームを止めずに stdin 経由でコマンド送信
                         self._repl.write_stream(stream_cmd.encode())
                     elif self._repl._stream_mode:
-                        # stream_cmd がない場合は従来通り pause/resume
+                        # USB: pause/resume して exec / BLE: pause/resume は no-op
                         self._repl.pause_stream()
-                        self._repl.exec(exec_code)
-                        self._repl.resume_stream(_MONITOR_SCRIPT)
+                        self._exec(exec_code)
+                        self._repl.resume_stream(self._repl.monitor_script)
                     else:
-                        self._repl.exec(exec_code)
+                        self._exec(exec_code)
             except Exception:
                 pass
 
@@ -184,8 +187,7 @@ class ArTecLinks:
         self.button.stop_watching()
         self._state.connected = False
         if isinstance(self._repl, BleRepl):
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self._repl.close())
+            self._repl.close_sync()
         else:
             self._repl.close()
 

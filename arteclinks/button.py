@@ -97,15 +97,21 @@ class Button:
     def start_watching(self) -> None:
         """
         デバイス側にモニタースクリプトを送り込み、push 監視を開始する。
+
+        USB接続: while ループスクリプトをデバイスに送り込む
+        BLE接続: デバイス側でバックグラウンドスレッドを起動する
+        どちらも repl.monitor_script / repl.exec_stream で透過的に扱う。
         """
         if self._watching:
             return
         self._watching = True
         with self._device._repl._lock:
-            self._device._repl.exec_stream(_MONITOR_SCRIPT, self._on_line)
+            self._device._repl.exec_stream(
+                self._device._repl.monitor_script, self._on_line
+            )
 
     def stop_watching(self) -> None:
-        """ボタン監視を停止し、通常の exec モードに戻す"""
+        """ボタン監視を停止する"""
         if not self._watching:
             return
         self._watching = False

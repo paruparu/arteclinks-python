@@ -29,7 +29,13 @@ class RawRepl:
       Ctrl-A (0x01) で入る
       コード + Ctrl-D (0x04) で実行
       "OK" + stdout + 0x04 + stderr + 0x04 + ">" が返る
+
+    BleRepl と共通のインターフェースを持つ:
+        exec_stream / stop_stream / pause_stream / resume_stream / write_stream
+        supports_stream_write / monitor_script
     """
+
+    supports_stream_write: bool = True
 
     CTRL_C = b'\x03'
     CTRL_A = b'\x01'
@@ -238,6 +244,12 @@ class RawRepl:
                 break
             buf += c
         return buf
+
+    @property
+    def monitor_script(self) -> str:
+        """USB用ボタン監視スクリプト"""
+        from .button import _MONITOR_SCRIPT
+        return _MONITOR_SCRIPT
 
     def __enter__(self):
         self.open()
